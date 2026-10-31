@@ -11,7 +11,11 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   return data;
 }
 export const imgs = (p) => (p.images?.length ? p.images : p.image ? [p.image] : []);
-export const tnd = (n) => Number(n).toFixed(0) + ' DT';
+// 7 -> "7 DT", 7.5 -> "7.5 DT" (prices and fees can have decimals)
+export const tnd = (n) => {
+  const x = Number(n);
+  return (Number.isInteger(x) ? x.toFixed(0) : x.toFixed(3).replace(/0+$/, '')) + ' DT';
+};
 export const fmtPhone = (p) => String(p || '').replace(/(\d{2})(\d{3})(\d{3})/, '$1 $2 $3');
 export const fmtDate = (d) => new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 export const STATUS = { new: 'Nouvelle', confirmed: 'Confirmée', shipped: 'Expédiée', delivered: 'Livrée', cancelled: 'Annulée' };

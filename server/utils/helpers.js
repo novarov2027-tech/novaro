@@ -1,3 +1,4 @@
+import Setting from '../models/Setting.js';
 export const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 export const bad = (status, message) => Object.assign(new Error(message), { status });
 // Tunisian mobile numbers: 8 digits, optional +216 prefix
@@ -29,11 +30,17 @@ export const socialFromEnv = () => {
   };
 };
 
-// Delivery fee added to every order (DT). Set DELIVERY_FEE in .env to change it.
-export const deliveryFee = () => {
+// Delivery fee added to every order (DT). The owner sets it in the admin (tab "Livraison").
+// Until he does, DELIVERY_FEE from .env is used (7 by default).
+const defaultFee = () => {
   const v = process.env.DELIVERY_FEE;
   const n = v === undefined || v === '' ? 7 : Number(v);
   return Number.isFinite(n) && n >= 0 ? n : 7;
+};
+export const getDeliveryFee = async () => {
+  const s = await Setting.findOne({ key: 'shop' }).lean();
+  const n = Number(s?.value?.deliveryFee);
+  return s?.value?.deliveryFee !== undefined && Number.isFinite(n) && n >= 0 ? n : defaultFee();
 };
 
 // Very small in-memory rate limiter (one Render instance). Key = visitor IP.

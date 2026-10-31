@@ -2,7 +2,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
-import { wrap, bad, cleanPhone, deliveryFee, rateLimit } from '../utils/helpers.js';
+import { wrap, bad, cleanPhone, getDeliveryFee, rateLimit } from '../utils/helpers.js';
 
 const router = Router();
 const release = (done) => Promise.all(done.map(([id, q]) => Product.updateOne({ _id: id }, { $inc: { stock: q } })));
@@ -51,15 +51,16 @@ router.post(
         done.push([id, q]);
         lines.push({ product: p._id, name: p.name, price: p.price, qty: q });
       }
-      const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
-      const fee = deliveryFee();
+      const round = (x) => Math.round(x * 1000) / 1000; // dinars have 3 decimals
+      const subtotal = round(lines.reduce((s, l) => s + l.price * l.qty, 0));
+      const fee = await getDeliveryFee();
       const order = await Order.create({
         orderNo: 'NV-' + Date.now().toString(36).slice(-5).toUpperCase(),
         customer: { name, phone, address },
         items: lines,
         subtotal,
         deliveryFee: fee,
-        total: subtotal + fee,
+        total: round(subtotal + fee),
         history: [{ status: 'new' }],
       });
       res.status(201).json({ orderNo: order.orderNo, total: order.total });

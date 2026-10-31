@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { tnd } from '../api.js';
 
 export default function CartDrawer() {
-  const { items, open, setOpen, setQty, total, deliveryFee } = useCart();
+  const { items, open, setOpen, setQty, total, deliveryFee, refreshFee } = useCart();
+  useEffect(() => { if (open) refreshFee(); }, [open]); // eslint-disable-line
   const nav = useNavigate();
   return (
     <aside className={'drawer' + (open ? ' on' : '')} aria-label="Panier" aria-hidden={!open}>
@@ -29,7 +31,7 @@ export default function CartDrawer() {
       {items.length > 0 && (
         <div className="foot">
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--mute)' }}><span>Sous-total</span><span>{tnd(total)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--mute)' }}><span>Livraison</span><span>{tnd(deliveryFee)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--mute)' }}><span>Livraison</span><span>{deliveryFee > 0 ? tnd(deliveryFee) : 'Gratuite'}</span></div>
           <div className="tot" style={{ marginTop: 8 }}><span>Total</span><b className="price">{tnd(total + deliveryFee)}</b></div>
           <button className="btn" style={{ width: '100%' }} onClick={() => { setOpen(false); nav('/checkout'); }}>Commander</button>
         </div>

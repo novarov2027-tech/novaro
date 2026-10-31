@@ -9,7 +9,7 @@ const pretty = (n) => (n.startsWith('216') && n.length === 11 ? `+216 ${n.slice(
 
 // Guest checkout: name + phone (address optional). The owner calls to confirm or cancel.
 export default function Checkout() {
-  const { items, total, clear, deliveryFee } = useCart();
+  const { items, total, clear, deliveryFee, refreshFee } = useCart();
   const [f, setF] = useState(() => ({ name: '', phone: '', address: '', ...saved() })); // remembered on this device
   const [hp, setHp] = useState(''); // honeypot: real people never see or fill it
   const [err, setErr] = useState('');
@@ -18,6 +18,7 @@ export default function Checkout() {
   const [callNumber, setCallNumber] = useState('');
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
+  useEffect(() => { refreshFee(); }, []); // eslint-disable-line
   useEffect(() => { api('/api/settings/social').then((d) => setCallNumber(d.whatsapp || '')).catch(() => {}); }, []);
 
   const submit = async (e) => {
@@ -65,7 +66,7 @@ export default function Checkout() {
       </div>
       <div className="err">{err}</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--mute)', marginTop: 10 }}><span>Sous-total</span><span>{tnd(total)}</span></div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--mute)' }}><span>Livraison</span><span>{tnd(deliveryFee)}</span></div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--mute)' }}><span>Livraison</span><span>{deliveryFee > 0 ? tnd(deliveryFee) : 'Gratuite'}</span></div>
       <div className="tot" style={{ marginTop: 8 }}><span>Total (paiement à la livraison)</span><b className="price">{tnd(total + deliveryFee)}</b></div>
       <button className="btn" style={{ width: '100%' }} disabled={busy}>{busy ? 'Envoi…' : 'Envoyer la commande'}</button>
     </form></div></div>

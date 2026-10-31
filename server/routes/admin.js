@@ -191,6 +191,15 @@ router.delete('/products/:id', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+/* ---------- delivery fee ---------- */
+router.put('/settings/shop', wrap(async (req, res) => {
+  const n = Number(String(req.body.deliveryFee).replace(',', '.'));
+  if (!Number.isFinite(n) || n < 0 || n > 1000) throw bad(400, 'Entrez un montant valide (en DT, entre 0 et 1000).');
+  const deliveryFee = Math.round(n * 1000) / 1000;
+  await Setting.findOneAndUpdate({ key: 'shop' }, { value: { deliveryFee } }, { upsert: true });
+  res.json({ deliveryFee });
+}));
+
 /* ---------- header banner ---------- */
 router.put('/settings/hero', wrap(async (req, res) => {
   const images = (Array.isArray(req.body.images) ? req.body.images : [])
