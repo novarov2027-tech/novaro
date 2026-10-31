@@ -1,14 +1,11 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { Link, Outlet } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
+import { tnd } from '../api.js';
 import CartDrawer from './CartDrawer.jsx';
 import Social from './Social.jsx';
 
 export default function StoreLayout() {
-  const { user, logout } = useAuth();
-  const { count, setOpen } = useCart();
-  const nav = useNavigate();
-  const isOwner = user?.role === 'owner';
+  const { count, total, open, setOpen } = useCart();
   return (
     <>
       <header>
@@ -17,17 +14,7 @@ export default function StoreLayout() {
             <img className="blend" src="/mono.jpg" alt="" />
             <span>NOVARO</span>
           </Link>
-          <nav className="nav">
-            <Link className="btn sm" to="/#shop">Explorer</Link>
-            {isOwner && <Link className="btn line sm" to="/admin">Vue admin</Link>}
-            {user && !isOwner && <><Link className="ghost" to="/account">Mon compte</Link><Link className="ghost" to="/orders">Mes commandes</Link></>}
-            {user ? (
-              <button className="ghost" onClick={async () => { await logout(); nav('/'); }}>Déconnexion</button>
-            ) : (
-              <Link className="ghost" to="/login">Se connecter</Link>
-            )}
-            {!isOwner && <button className="ghost" onClick={() => setOpen(true)}>Panier<span className="count">{count}</span></button>}
-          </nav>
+          <button className="ghost" onClick={() => setOpen(true)}>Panier<span className="count">{count}</span></button>
         </div>
       </header>
       <Outlet />
@@ -41,6 +28,9 @@ export default function StoreLayout() {
         </div>
       </footer>
       <CartDrawer />
+      {count > 0 && !open && (
+        <button className="cartbar" onClick={() => setOpen(true)}>Voir le panier ({count}) · {tnd(total)}</button>
+      )}
     </>
   );
 }

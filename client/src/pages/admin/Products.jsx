@@ -54,7 +54,7 @@ export default function Products() {
         </select>
         <button className="btn sm" onClick={() => { setErr(''); setForm({ ...EMPTY, category: filter && filter !== 'none' ? filter : '' }); }}>Nouveau produit</button>
       </div>
-      <div className="tw"><table>
+      <div className="tw"><table className="stack prods">
         <thead><tr><th /><th>Produit</th><th>Catégorie</th><th>Prix</th><th>Stock</th><th>Visible</th><th /></tr></thead>
         <tbody>
           {list.map((p) => (

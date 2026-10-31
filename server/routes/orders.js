@@ -2,97 +2,72 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
-import User from '../models/User.js';
-import { requireAuth } from '../middleware/auth.js';
-import { wrap, bad, cleanPhone, deliveryFee } from '../utils/helpers.js';
+import { wrap, bad, cleanPhone, deliveryFee, rateLimit } from '../utils/helpers.js';
 
 const router = Router();
 const release = (done) => Promise.all(done.map(([id, q]) => Product.updateOne({ _id: id }, { $inc: { stock: q } })));
 
-// Customer confirms an order: stock is reserved immediately (atomic per product).
-router.post('/', requireAuth, wrap(async (req, res) => {
-  const { items, customer = {} } = req.body;
-  const phone = cleanPhone(customer.phone || req.user.phone);
-  const name = String(customer.name || req.user.name || '').trim();
-  if (!name) throw bad(400, 'Entrez votre nom.');
-  if (!phone) throw bad(400, 'Entrez un numéro de téléphone valide (8 chiffres).');
-  if (!Array.isArray(items) || !items.length) throw bad(400, 'Votre panier est vide.');
+// No customer accounts: anyone can send an order with a name and a phone number.
+// The owner then calls the customer, and confirms or cancels the order from the admin.
+// Stock is reserved immediately (atomic per product) and given back if the owner cancels.
+router.post(
+  '/',
+  rateLimit({ windowMs: 3600 * 1000, max: 20, message: 'Trop de commandes depuis cet appareil. Appelez-nous pour commander.' }),
+  wrap(async (req, res) => {
+    const { items, customer = {} } = req.body;
+    if (req.body.website) return res.status(201).json({ orderNo: 'NV-OK', total: 0 }); // honeypot: bots fill the hidden field
 
-  const wanted = new Map();
-  for (const i of items) {
-    const q = parseInt(i.qty, 10);
-    if (!mongoose.isValidObjectId(i.productId) || !(q > 0)) throw bad(400, 'Panier invalide.');
-    wanted.set(String(i.productId), (wanted.get(String(i.productId)) || 0) + q);
-  }
-
-  const done = [];
-  const lines = [];
-  try {
-    for (const [id, q] of wanted) {
-      const p = await Product.findOneAndUpdate(
-        { _id: id, isActive: true, stock: { $gte: q } },
-        { $inc: { stock: -q } },
-        { new: true }
-      );
-      if (!p) {
-        const cur = await Product.findById(id);
-        throw bad(409, cur ? `Stock insuffisant pour ${cur.name}.` : 'Produit introuvable.');
-      }
-      done.push([id, q]);
-      lines.push({ product: p._id, name: p.name, price: p.price, qty: q });
-    }
-    const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
-    const fee = deliveryFee();
+    const name = String(customer.name || '').trim().slice(0, 60);
+    const phone = cleanPhone(customer.phone);
     const address = String(customer.address || '').trim().slice(0, 200);
-    const order = await Order.create({
-      orderNo: 'NV-' + Date.now().toString(36).slice(-5).toUpperCase(),
-      user: req.user._id,
-      customer: { name, phone, address, governorate: customer.governorate || '' },
-      items: lines,
-      subtotal,
-      deliveryFee: fee,
-      total: subtotal + fee,
-      history: [{ status: 'new' }],
-    });
-    // remember the contact details for the next order (never blocks the order itself)
-    User.updateOne({ _id: req.user._id }, { $set: { phone, ...(name ? { name } : {}), ...(address ? { address } : {}) } }).catch(() => {});
-    res.status(201).json(order);
-  } catch (e) {
-    await release(done); // put the stock back if anything failed
-    throw e;
-  }
-}));
+    if (name.length < 2) throw bad(400, 'Entrez votre nom.');
+    if (!phone) throw bad(400, 'Entrez un numéro de téléphone valide (8 chiffres).');
+    if (!Array.isArray(items) || !items.length || items.length > 50) throw bad(400, 'Votre panier est vide.');
 
-router.get('/mine', requireAuth, wrap(async (req, res) => {
-  res.json(await Order.find({ user: req.user._id, hiddenByCustomer: { $ne: true } }).sort('-createdAt'));
-}));
+    // at most 3 orders per phone number per hour (stops accidental double sends and spam)
+    const recent = await Order.countDocuments({ 'customer.phone': phone, createdAt: { $gte: new Date(Date.now() - 3600 * 1000) } });
+    if (recent >= 3) throw bad(429, 'Vous avez déjà passé plusieurs commandes. Nous vous appelons très bientôt.');
 
-// The customer clears delivered / cancelled orders from HIS list (one order with {id}, or all of them).
-// They are only hidden for him: the owner keeps them until he exports and purges the history.
-router.post('/mine/clear', requireAuth, wrap(async (req, res) => {
-  const filter = { user: req.user._id, status: { $in: ['delivered', 'cancelled'] } };
-  if (req.body?.id) {
-    if (!mongoose.isValidObjectId(req.body.id)) throw bad(404, 'Commande introuvable.');
-    filter._id = req.body.id;
-  }
-  const { modifiedCount } = await Order.updateMany(filter, { $set: { hiddenByCustomer: true } });
-  res.json({ cleared: modifiedCount });
-}));
+    const wanted = new Map();
+    for (const i of items) {
+      const q = parseInt(i.qty, 10);
+      if (!mongoose.isValidObjectId(i.productId) || !(q > 0) || q > 50) throw bad(400, 'Panier invalide.');
+      wanted.set(String(i.productId), (wanted.get(String(i.productId)) || 0) + q);
+    }
 
-// The customer cancels their own order, only while it is still "new" (not confirmed by the owner yet).
-router.post('/:id/cancel', requireAuth, wrap(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw bad(404, 'Commande introuvable.');
-  const order = await Order.findOneAndUpdate(
-    { _id: req.params.id, user: req.user._id, status: 'new' },
-    { $set: { status: 'cancelled' }, $push: { history: { status: 'cancelled' } } },
-    { new: true }
-  );
-  if (!order) {
-    const exists = await Order.exists({ _id: req.params.id, user: req.user._id });
-    throw bad(exists ? 409 : 404, exists ? 'Cette commande ne peut plus être annulée en ligne. Contactez-nous.' : 'Commande introuvable.');
-  }
-  await Promise.all(order.items.map((i) => Product.updateOne({ _id: i.product }, { $inc: { stock: i.qty } })));
-  res.json(order);
-}));
+    const done = [];
+    const lines = [];
+    try {
+      for (const [id, q] of wanted) {
+        const p = await Product.findOneAndUpdate(
+          { _id: id, isActive: true, stock: { $gte: q } },
+          { $inc: { stock: -q } },
+          { new: true }
+        );
+        if (!p) {
+          const cur = await Product.findById(id);
+          throw bad(409, cur ? `Stock insuffisant pour ${cur.name}.` : 'Un produit de votre panier n’est plus disponible.');
+        }
+        done.push([id, q]);
+        lines.push({ product: p._id, name: p.name, price: p.price, qty: q });
+      }
+      const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
+      const fee = deliveryFee();
+      const order = await Order.create({
+        orderNo: 'NV-' + Date.now().toString(36).slice(-5).toUpperCase(),
+        customer: { name, phone, address },
+        items: lines,
+        subtotal,
+        deliveryFee: fee,
+        total: subtotal + fee,
+        history: [{ status: 'new' }],
+      });
+      res.status(201).json({ orderNo: order.orderNo, total: order.total });
+    } catch (e) {
+      await release(done); // put the stock back if anything failed
+      throw e;
+    }
+  })
+);
 
 export default router;

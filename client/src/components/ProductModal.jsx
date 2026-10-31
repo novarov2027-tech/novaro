@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useCart } from '../context/CartContext.jsx';
 import { tnd, imgs } from '../api.js';
-import { useAuth } from '../context/AuthContext.jsx';
 
 export const Stock = ({ p }) =>
   p.stock < 1 ? <small className="stk low">Épuisé</small>
@@ -48,7 +47,6 @@ function Gallery({ p }) {
 
 export default function ProductModal({ p, onClose }) {
   const { add, inCart, setOpen } = useCart();
-  const isOwner = useAuth().user?.role === 'owner'; // the owner only previews the shop
   const left = Math.max(0, p.stock - inCart(p._id));
   const [q, setQ] = useState(1);
   const qty = Math.max(1, Math.min(q, left || 1));
@@ -63,7 +61,7 @@ export default function ProductModal({ p, onClose }) {
             <p style={{ color: 'var(--mute)', margin: 0 }}>{p.description}</p>
             <p className="price serif" style={{ fontSize: 30, margin: '16px 0 4px' }}>{tnd(p.price)}</p>
             <p style={{ margin: '0 0 16px' }}><Stock p={p} /></p>
-            <div style={{ display: isOwner ? 'none' : 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="buyrow" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="qty">
                 <button onClick={() => setQ(Math.max(1, qty - 1))} aria-label="Moins">−</button>
                 <span>{qty}</span>

@@ -35,3 +35,17 @@ export const deliveryFee = () => {
   const n = v === undefined || v === '' ? 7 : Number(v);
   return Number.isFinite(n) && n >= 0 ? n : 7;
 };
+
+// Very small in-memory rate limiter (one Render instance). Key = visitor IP.
+// Behind Cloudflare/Render the real IP is in CF-Connecting-IP, otherwise Express' req.ip is used.
+const hits = new Map();
+export const rateLimit = ({ windowMs, max, message }) => (req, res, next) => {
+  const key = `${req.path}|${req.headers['cf-connecting-ip'] || req.ip}`;
+  const now = Date.now();
+  const recent = (hits.get(key) || []).filter((t) => now - t < windowMs);
+  if (recent.length >= max) return next(Object.assign(new Error(message), { status: 429 }));
+  recent.push(now);
+  hits.set(key, recent);
+  if (hits.size > 5000) for (const [k, v] of hits) if (!v.some((t) => now - t < windowMs)) hits.delete(k);
+  next();
+};

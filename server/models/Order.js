@@ -4,7 +4,7 @@ const { ObjectId } = mongoose.Schema.Types;
 const schema = new mongoose.Schema(
   {
     orderNo: { type: String, unique: true },
-    user: { type: ObjectId, ref: 'User', required: true, index: true },
+    user: { type: ObjectId, ref: 'User' }, // old orders only: there are no customer accounts anymore
     customer: { name: String, phone: String, address: { type: String, default: '' }, governorate: String },
     items: [
       { _id: false, product: { type: ObjectId, ref: 'Product' }, name: String, price: Number, qty: Number },

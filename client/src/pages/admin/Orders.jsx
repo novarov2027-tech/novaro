@@ -71,7 +71,7 @@ export default function Orders() {
           <button className="btn line sm" onClick={openPurge}>Exporter en Excel</button>
         </span>
       </div>
-      <div className="tw"><table>
+      <div className="tw"><table className="stack orders">
         <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total</th><th>Statut</th><th /></tr></thead>
         <tbody>
           {orders.map((o) => (

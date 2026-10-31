@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { api, tnd } from '../api.js';
 import ProductModal, { Stock, Visual } from '../components/ProductModal.jsx';
 import Hero from '../components/Hero.jsx';
 import { useCart } from '../context/CartContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
 
 // lower-case + strip accents so "cedre" finds "Cèdre"
 const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -25,16 +23,8 @@ export default function Shop() {
   const [shown, setShown] = useState(8);
   const [sel, setSel] = useState(null);
   const [err, setErr] = useState('');
-  const loc = useLocation();
   const { add, inCart, setOpen } = useCart();
-  const isOwner = useAuth().user?.role === 'owner'; // the owner only previews the shop
   const buy = (p) => { add(p, 1); setOpen(true); }; // adds one to the cart and opens it, ready for "Commander"
-  // the "Explorer" button in the header links to /#shop
-  useEffect(() => {
-    if (loc.hash !== '#shop') return;
-    const t = setTimeout(() => document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }), 150);
-    return () => clearTimeout(t);
-  }, [loc]);
 
   useEffect(() => {
     Promise.all([api('/api/categories'), api('/api/products')])
@@ -106,11 +96,9 @@ export default function Shop() {
                 <Stock p={p} />
                 <div className="row">
                   <button className="btn line sm" onClick={() => setSel(p)}>Détails</button>
-                  {!isOwner && (
-                    <button className="btn sm" onClick={() => buy(p)} disabled={p.stock < 1 || inCart(p._id) >= p.stock}>
-                      {p.stock < 1 ? 'Épuisé' : inCart(p._id) >= p.stock ? 'Dans le panier' : 'Acheter'}
-                    </button>
-                  )}
+                  <button className="btn sm" onClick={() => buy(p)} disabled={p.stock < 1 || inCart(p._id) >= p.stock}>
+                    {p.stock < 1 ? 'Épuisé' : inCart(p._id) >= p.stock ? 'Dans le panier' : 'Acheter'}
+                  </button>
                 </div>
               </div>
             </article>

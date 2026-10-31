@@ -1,19 +1,18 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 const TABS = [['/admin', 'Commandes', true], ['/admin/products', 'Produits'], ['/admin/categories', 'Catégories'], ['/admin/banner', 'Bannière']];
 
 export default function AdminLayout() {
   const { logout } = useAuth();
-  const nav = useNavigate();
   const style = ({ isActive }) => ({ color: isActive ? 'var(--gold2)' : undefined, borderColor: isActive ? 'var(--gold)' : undefined, textDecoration: 'none' });
   return (
     <div className="adm">
       <div className="atop">
         <div className="brand"><img className="blend" src="/mono.jpg" alt="" /><span>NOVARO</span></div>
         <div className="actions">
-          <Link className="btn sm" to="/">Vue boutique</Link>
-          <button className="ghost" onClick={async () => { await logout(); nav('/'); }}>Déconnexion</button>
+          <Link className="btn sm" to="/">Voir la boutique</Link>
+          <button className="ghost" onClick={logout}>Déconnexion</button>
         </div>
       </div>
       <div className="tabs" role="tablist" style={{ marginBottom: 18 }}>

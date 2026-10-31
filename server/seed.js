@@ -1,6 +1,5 @@
 // Usage: npm run seed   (safe to re-run: owner is upserted; categories and sample products are only created on an empty database)
 import 'dotenv/config';
-import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import User from './models/User.js';
 import Category from './models/Category.js';
@@ -40,22 +39,6 @@ await User.findOneAndUpdate(
 await User.updateMany({ role: 'owner', username: { $ne: ownerName } }, { $set: { role: 'customer' } }); // only one owner
 console.log('Owner ready: username =', ownerName, '| codes are sent to', process.env.OWNER_EMAIL || '(OWNER_EMAIL missing!)');
 
-// --- test customer (outside production it defaults to client / Client2026) ---
-const isProd = process.env.NODE_ENV === 'production';
-const testUser = (process.env.TEST_CLIENT_USERNAME || (!isProd && 'client') || '').toLowerCase();
-const testPass = process.env.TEST_CLIENT_PASSWORD || (!isProd && 'Client2026');
-if (testUser && testPass && testUser !== ownerName) {
-  await User.findOneAndUpdate(
-    { username: testUser },
-    {
-      $set: { name: 'Client Test', phone: '55123456', passwordHash: await bcrypt.hash(testPass, 10) },
-      $setOnInsert: { role: 'customer' }, // never changes the role of an existing account
-    },
-    { upsert: true, setDefaultsOnInsert: true }
-  );
-  console.log('Test customer ready:', testUser);
-}
-
 // Only on a fresh database, so categories deleted in the admin stay deleted.
 if ((await Category.countDocuments()) === 0) {
   await Category.insertMany(CATS.map((c, i) => ({ slug: c.slug, name: c.name, position: i })));
@@ -63,7 +46,8 @@ if ((await Category.countDocuments()) === 0) {
 }
 const cats = await Category.find();
 
-if ((await Product.countDocuments()) === 0) {
+// SEED_SAMPLES=false skips the made-up demo products (use it for the real, online database)
+if (process.env.SEED_SAMPLES !== 'false' && (await Product.countDocuments()) === 0) {
   const docs = [];
   CATS.forEach((c, ci) => {
     for (let i = 0; i < c.n; i++)

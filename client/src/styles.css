@@ -157,3 +157,62 @@ a.ghost,a.btn{text-decoration:none;display:inline-block}
 #shop{scroll-margin-top:84px}
 @media(max-width:720px){.bar{height:auto;min-height:60px;flex-wrap:wrap;padding:8px 0}.nav{gap:6px}.nav .ghost,.nav .btn{padding:7px 12px;font-size:14px}}
 .info .row{gap:8px;flex-wrap:wrap}
+
+/* ===== Mobile ===== */
+button{touch-action:manipulation}
+.cartbar{display:none}
+@media(max-width:720px){
+  .wrap{padding:0 14px}
+  header .bar{height:60px;flex-wrap:nowrap;padding:0}
+  .brand img{height:40px}
+  .hero{min-height:0}
+  .hero .slide{object-fit:contain;background:#000}
+  .lead{padding:6px 16px 36px}
+  .lead p{font-size:19px}
+  .page{padding:24px 14px 0}
+  h2{font-size:30px}
+  .pills{margin:0 -14px 18px;padding:0 14px 8px}
+  .pill{padding:11px 16px}
+  .grid{gap:10px}
+  .info{padding:12px 10px 14px}
+  .info .row{flex-direction:column;align-items:stretch}
+  .info .row .btn{width:100%;padding:12px 10px}
+  .btn.sm{padding:11px 16px}
+  .lnk{padding:10px 8px}
+  .qty button{width:42px;height:42px}
+  /* pop-ups become bottom sheets */
+  .veil{padding:0;align-items:flex-end}
+  .veil .modal{width:100%;max-width:none;max-height:92vh;max-height:92dvh;border-radius:14px 14px 0 0;border-bottom:0}
+  .gal .vis{min-height:300px}
+  .buyrow{position:sticky;bottom:0;background:var(--panel);padding:12px 0;margin-top:14px;border-top:1px solid var(--line);z-index:3}
+  .buyrow .btn{flex:1}
+  .drawer{width:100%}
+  footer{padding-bottom:96px}
+  .cartbar{display:block;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:45;border:0;border-radius:4px;padding:15px;font:500 16px Jost,sans-serif;color:#000;background:linear-gradient(135deg,var(--gold2),var(--gold) 55%,#a8823f);box-shadow:0 6px 24px rgba(0,0,0,.6)}
+
+  /* admin on a phone: tabs scroll sideways, tables become cards */
+  .adm{padding:0 14px 60px}
+  .tabs{overflow-x:auto;white-space:nowrap;gap:20px;scrollbar-width:none}
+  .tl{flex-direction:column;align-items:stretch}
+  .tl input,.tl select{width:100%!important;max-width:none!important}
+  .tw{border:0;overflow:visible}
+  .stack{min-width:0!important}
+  .stack thead{display:none}
+  .stack,.stack tbody,.stack tr,.stack td{display:block;width:100%}
+  .stack tr{border:1px solid var(--line);background:var(--panel);margin-bottom:12px;padding:8px 12px}
+  .stack td{border:0;padding:6px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right;font-size:15px}
+  .stack td::before{color:var(--mute);font-size:13px;text-align:left;flex:none}
+  .stack td:last-child{justify-content:flex-end;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+  .orders td:nth-child(1)::before{content:'N°'}
+  .orders td:nth-child(2)::before{content:'Client'}
+  .orders td:nth-child(3)::before{content:'Date'}
+  .orders td:nth-child(4)::before{content:'Total'}
+  .orders td:nth-child(5)::before{content:'Statut'}
+  .prods td:nth-child(2)::before{content:'Produit'}
+  .prods td:nth-child(3)::before{content:'Catégorie'}
+  .prods td:nth-child(4)::before{content:'Prix'}
+  .prods td:nth-child(5)::before{content:'Stock'}
+  .prods td:nth-child(6)::before{content:'Visible'}
+  .stack td.empty{display:block;text-align:center;border:0;margin:0;padding:12px 0}
+  .stack td.empty::before{content:none!important}
+}
