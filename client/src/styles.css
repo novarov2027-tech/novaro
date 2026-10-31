@@ -193,8 +193,8 @@ button{touch-action:manipulation}
   /* admin on a phone: tabs scroll sideways, tables become cards */
   .adm{padding:0 14px 60px}
   .tabs{overflow-x:auto;white-space:nowrap;gap:20px;scrollbar-width:none}
-  .tl{flex-direction:column;align-items:stretch}
-  .tl input,.tl select{width:100%!important;max-width:none!important}
+  .adm .tl{flex-direction:column;align-items:stretch}
+  .adm .tl input,.adm .tl select{width:100%!important;max-width:none!important}
   .tw{border:0;overflow:visible}
   .stack{min-width:0!important}
   .stack thead{display:none}
@@ -216,3 +216,9 @@ button{touch-action:manipulation}
   .stack td.empty{display:block;text-align:center;border:0;margin:0;padding:12px 0}
   .stack td.empty::before{content:none!important}
 }
+
+/* Search + sort: one line, and they follow the visitor under the header while scrolling */
+.shopbar{position:sticky;top:calc(69px + env(safe-area-inset-top,0px));z-index:30;display:flex;gap:10px;align-items:center;background:#000;padding:10px 0;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.shopbar input{flex:1 1 auto;min-width:0;max-width:none;height:46px}
+.shopbar select{flex:0 0 auto;width:auto;max-width:46%;height:46px}
+@media(max-width:720px){.shopbar{top:calc(61px + env(safe-area-inset-top,0px));margin:0 -14px 12px;padding:10px 14px}}

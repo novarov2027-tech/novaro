@@ -54,7 +54,7 @@ export default function Shop() {
       </div>
       <main className="wrap" id="shop">
         <h2>La collection</h2>
-        <p className="sub">Parcourez librement. Un compte est nécessaire uniquement pour commander.</p>
+        <p className="sub">Parcourez librement. Pour commander, indiquez simplement votre nom et votre numéro de téléphone.</p>
         {err && <p className="err">{err}</p>}
         <div className="pills" role="group" aria-label="Catégories">
           <button className="pill" aria-pressed={cat === 'all'} onClick={() => { setCat('all'); setShown(8); }}>Tout<small>{products.length}</small></button>
@@ -65,12 +65,11 @@ export default function Shop() {
           ))}
         </div>
 
-        <div className="tl" style={{ marginBottom: 22 }}>
+        <div className="shopbar">
           <input
             type="search"
             aria-label="Rechercher un produit"
             placeholder="Rechercher un produit"
-            style={{ flex: '1 1 260px', maxWidth: 420 }}
             value={q}
             onChange={(e) => { setQ(e.target.value); setShown(8); }}
           />
