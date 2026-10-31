@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import path from 'path';                      // NEW
+import { fileURLToPath } from 'url';          // NEW
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -9,6 +11,8 @@ import orders from './routes/orders.js';
 import admin from './routes/admin.js';
 
 for (const k of ['MONGODB_URI', 'JWT_SECRET']) if (!process.env[k]) throw new Error(`Missing ${k} in .env`);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); // NEW
 
 const app = express();
 app.set('trust proxy', 1);
@@ -22,7 +26,14 @@ app.use('/api/orders', orders);
 app.use('/api/admin', admin);
 app.use('/api', catalog);
 
-app.use((req, res) => res.status(404).json({ error: 'Route introuvable' }));
+// CHANGED: only unknown /api routes return the JSON 404
+app.use('/api', (req, res) => res.status(404).json({ error: 'Route introuvable' }));
+
+// NEW: serve the React build, then fall back to index.html for React Router
+const clientDist = path.join(__dirname, '../client/dist'); // use '../client/build' for Create React App
+app.use(express.static(clientDist));
+app.get('*', (req, res) => res.sendFile(path.join(clientDist, 'index.html')));
+
 app.use((err, req, res, next) => {
   if (!err.status) console.error(err);
   res.status(err.status || 500).json({ error: err.status ? err.message : 'Erreur serveur' });
