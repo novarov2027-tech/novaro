@@ -8,7 +8,7 @@ import Category from '../models/Category.js';
 import Setting from '../models/Setting.js';
 import Order, { STATUSES } from '../models/Order.js';
 import { requireAuth, requireOwner } from '../middleware/auth.js';
-import { wrap, bad, escapeRegex } from '../utils/helpers.js';
+import { wrap, bad, escapeRegex, normalizeSocial } from '../utils/helpers.js';
 
 const router = Router();
 router.use(requireAuth, requireOwner);
@@ -189,6 +189,13 @@ router.patch('/products/:id', wrap(async (req, res) => { // quick edits: stock /
 router.delete('/products/:id', wrap(async (req, res) => {
   await Product.findByIdAndDelete(req.params.id);
   res.json({ ok: true });
+}));
+
+/* ---------- footer links and phone number ---------- */
+router.put('/settings/social', wrap(async (req, res) => {
+  const value = normalizeSocial(req.body);
+  await Setting.findOneAndUpdate({ key: 'social' }, { value }, { upsert: true });
+  res.json(value);
 }));
 
 /* ---------- delivery fee ---------- */

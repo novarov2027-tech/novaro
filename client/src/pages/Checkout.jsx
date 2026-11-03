@@ -56,7 +56,7 @@ export default function Checkout() {
       <label htmlFor="cn">Nom</label>
       <input id="cn" autoComplete="name" value={f.name} onChange={set('name')} />
       <label htmlFor="cp">Téléphone</label>
-      <input id="cp" type="tel" inputMode="numeric" autoComplete="tel" placeholder="55 123 456" value={f.phone} onChange={set('phone')} />
+      <input id="cp" type="tel" inputMode="numeric" autoComplete="tel" value={f.phone} onChange={set('phone')} />
       <label htmlFor="ca">Adresse de livraison (facultatif)</label>
       <input id="ca" autoComplete="street-address" value={f.address} onChange={set('address')} />
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" value={hp} onChange={(e) => setHp(e.target.value)}

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import Category from '../models/Category.js';
 import Product from '../models/Product.js';
 import Setting from '../models/Setting.js';
-import { wrap, bad, socialFromEnv, getDeliveryFee } from '../utils/helpers.js';
+import { wrap, bad, getSocial, getDeliveryFee } from '../utils/helpers.js';
 
 const router = Router();
 
@@ -33,8 +33,8 @@ router.get('/products/:id', wrap(async (req, res) => {
   res.json(p);
 }));
 
-// Social links shown in the footer (public), read from .env
-router.get('/settings/social', (req, res) => res.json(socialFromEnv()));
+// Social links and phone number shown in the footer (public), edited by the owner in the admin
+router.get('/settings/social', wrap(async (req, res) => res.json(await getSocial())));
 
 // Delivery fee (public), set by the owner in the admin
 router.get('/settings/shop', wrap(async (req, res) => res.json({ deliveryFee: await getDeliveryFee() })));

@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-const TABS = [['/admin', 'Commandes', true], ['/admin/products', 'Produits'], ['/admin/categories', 'Catégories'], ['/admin/banner', 'Bannière'], ['/admin/delivery', 'Livraison']];
+const TABS = [['/admin', 'Commandes', true], ['/admin/products', 'Produits'], ['/admin/categories', 'Catégories'], ['/admin/banner', 'Bannière'], ['/admin/delivery', 'Livraison'], ['/admin/social', 'Réseaux']];
 
 export default function AdminLayout() {
   const { logout } = useAuth();

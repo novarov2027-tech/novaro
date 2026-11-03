@@ -56,3 +56,22 @@ export const rateLimit = ({ windowMs, max, message }) => (req, res, next) => {
   if (hits.size > 5000) for (const [k, v] of hits) if (!v.some((t) => now - t < windowMs)) hits.delete(k);
   next();
 };
+
+// Footer social links can be edited by the owner in the admin (tab "Réseaux").
+// Until he saves them once, the values from .env (FACEBOOK_URL, INSTAGRAM_URL, WHATSAPP_NUMBER) are used.
+export const normalizeSocial = (b = {}) => {
+  let whatsapp = String(b.whatsapp || '').replace(/\D/g, '');
+  if (whatsapp.length === 8) whatsapp = '216' + whatsapp; // Tunisian local number
+  if (whatsapp && (whatsapp.length < 10 || whatsapp.length > 15)) throw bad(400, 'Numéro WhatsApp invalide (8 chiffres, ou avec l’indicatif du pays).');
+  return {
+    facebook: toLink(b.facebook, 'https://www.facebook.com/'),
+    instagram: toLink(b.instagram, 'https://www.instagram.com/'),
+    whatsapp,
+  };
+};
+export const getSocial = async () => {
+  const s = await Setting.findOne({ key: 'social' }).lean();
+  return s?.value
+    ? { facebook: s.value.facebook || '', instagram: s.value.instagram || '', whatsapp: s.value.whatsapp || '' }
+    : socialFromEnv();
+};
